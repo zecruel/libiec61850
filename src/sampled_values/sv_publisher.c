@@ -36,7 +36,7 @@
 #define DEBUG_SV_PUBLISHER 1
 #endif
 
-#define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS
+#define CONFIG_SV_DEFAULT_DST_ADDRESS {0x01, 0x0c, 0xcd, 0x04, 0x00, 0x10}
 
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
@@ -453,7 +453,8 @@ SVPublisher_ASDU_encodeToBuffer(SVPublisher_ASDU self, uint8_t* buffer, int bufP
     /* SmpSynch */
     bufPos = BerEncoder_encodeTL(0x85, 1, buffer, bufPos);
     self->smpSynchBuf = buffer + bufPos;
-    buffer[bufPos++] = self->smpSynch;
+    //buffer[bufPos++] = self->smpSynch;
+    buffer[bufPos++] = 0;
 
     /* SmpRate */
     if (self->hasSmpRate)
