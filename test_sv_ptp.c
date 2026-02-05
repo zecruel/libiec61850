@@ -10,6 +10,8 @@
 // Local includes
 #include "timinglib.h"
 #include "sv_publisher.h"
+#include "hal_ethernet.h"
+#include "hal_socket.h"
 
 // Linux includes
 #include <pthread.h>
@@ -30,6 +32,36 @@ struct sv_param {
 void handle_signal(int signal) {
   printf("Signal received: %d\n", signal);
   running = 0;
+}
+void * pthread_ptp(void * argument) {
+  struct sv_param *param = argument;
+  if (!argument) return (void*)"Error in param";
+
+  EthernetSocket sock  = Ethernet_createSocket(param->interface, NULL);
+  if (!sock) return (void*)"error in socket";
+
+  Ethernet_setProtocolFilter(sock, 0x88f7);
+
+  EthernetHandleSet hs = EthernetHandleSet_new();
+  EthernetHandleSet_addSocket(hs, sock);
+  uint8_t buffer[1518];
+
+  while (running){
+    switch (EthernetHandleSet_waitReady(hs, 100)){
+      case -1: printf("hs fail"); break;
+      case 0: break;
+      default:{
+       int packet_size = Ethernet_receivePacket(sock, buffer, 1518);
+       //printf("%d\n", packet_size);
+       for (int i = 0; i < packet_size; i++){
+	      printf("%02X ", buffer[i]);
+       } printf("\n"); 
+      }
+    }
+  }
+
+
+  Ethernet_destroySocket(sock);
 }
 
 void * pthread_task(void * argument) {
@@ -177,16 +209,21 @@ int main(int argc, char** argv){
 
   printf("Starting pthread at fixed interval using `sleep_until_us()`.\n\n");
 
-  pthread_t thread;
+  pthread_t thread, ptp_r;
   //const char thread_name[] = "some thread name"; // this can really be ANY argument
-  int retcode = pthread_create(&thread, NULL, pthread_task, (void*)&param);
   
+  int retcode = pthread_create(&thread, NULL, pthread_task, (void*)&param);
   running = 1;
   if (retcode != 0){
       printf("Failed to create pthread. retcode = %i: %s\n", retcode, strerror(retcode));
   }
   
+  retcode = pthread_create(&ptp_r, NULL, pthread_ptp, (void*)&param);
+  if (retcode != 0){
+      printf("Failed to create ptp. retcode = %i: %s\n", retcode, strerror(retcode));
+  }
   
+
   printf("Waiting for signal...\n");
   pause(); // Suspend program execution until a signal arrives
   printf("Program resumed after signal.\n");
