@@ -23,6 +23,8 @@
 #endif
 
 static int running = 0;
+static int smp_cnt = 0;
+static int sync = 0;
 
 struct sv_param {
   char *interface;
@@ -53,10 +55,14 @@ void * pthread_ptp(void * argument) {
       default:{
        int packet_size = Ethernet_receivePacket(sock, buffer, 1518);
        //printf("%d\n", packet_size);
-       for (int i = 0; i < packet_size; i++){
-	      printf("%02X ", buffer[i]);
-       } printf("\n"); 
-      }
+       if (packet_size > 57) {
+	       if (buffer[14] == 0x08){
+		       uint32_t ns = buffer[57] | buffer[56]<<8 | buffer[55]<<16 | buffer[54] << 24;
+		       //printf("%fs ",(float) ns/1000000000);
+		      smp_cnt = 4800 * (float) ns/1000000000;
+		      //printf("smpCnt = %d\n", smp_cnt);
+		      sync = 1;
+      }}}
     }
   }
 
@@ -110,8 +116,9 @@ void * pthread_task(void * argument) {
   const uint64_t PERIOD_US = 208;
   // =============================================================================================
   // Seed the last wake time with the current time.
-  uint64_t last_wake_time_us = micros();
 
+  //uint64_t last_wake_time_us = micros();
+  uint64_t last_wake_time_ns = nanos();
   //printf("thread_name = %s\n", thread_name);
   printf("loop period = %lu ns (%lu us); freq = %.1f Hz\n",
       US_TO_NS(PERIOD_US), PERIOD_US, 1.0/US_TO_SEC((double)PERIOD_US));
@@ -132,11 +139,22 @@ void * pthread_task(void * argument) {
   int currentC;
   int currentN;
 
-  int sampleCount = 0;
+  sleep_ms( 3000);
+
+  int sampleCount = smp_cnt;
   
   while (running) {
+	  if (sync){
+		  sync = 0;
+    if (sampleCount != smp_cnt){
+       printf("smp_int = %d, smp_ptp = %d \n", sampleCount, smp_cnt);
+       sampleCount = smp_cnt;
+    }}
     // Wait for the next cycle.
-    sleep_until_us(&last_wake_time_us, PERIOD_US);
+    
+    //sleep_until_us(&last_wake_time_us, PERIOD_US);
+    sleep_until_ns(&last_wake_time_ns, 208343);
+    
     
     /* update measurement values */
     int samplePoint = sampleCount % 80;
