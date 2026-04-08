@@ -1,0 +1,325 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Mergin unit genérica - Autor Ezequiel Rabelo de Aguiar, CEMIG GT = 08/04/2026-->
+<SCL xmlns="http://www.iec.ch/61850/2003/SCL" xmlns:sxy="http://www.iec.ch/61850/2003/SCLcoordinates" version="2007" revision="B" release="4">
+  <Header id="MU_GENERICA" revision="A" version="4" toolID="MANUAL" nameStructure="IEDName">
+    <History>
+      <Hitem revision="A" version="1" who="ZECRUEL" what="MU GENERICA" why="Publicar SV" when="2026-04-03" />
+    </History>
+  </Header>
+  <Communication>
+    <SubNetwork name="Processo" type="8-MMS">
+      <Text>Barramento de Processo - Segmento no.1 - Setor de 500kV</Text>
+      <BitRate unit="b/s" multiplier="M">100</BitRate>
+      <ConnectedAP iedName="MU_GEN" apName="Pr">
+        <Address>
+          <P type="IP">201.234.56.66</P>
+          <P type="IP-SUBNET">255.255.255.0</P>
+        </Address>
+        <SMV ldInst="Mestre" cbName="SV_Vao">
+          <Address>
+            <P type="MAC-Address">01-0C-CD-04-09-82</P>
+            <P type="VLAN-ID">0B8</P>
+            <P type="VLAN-PRIORITY">5</P>
+            <P type="APPID">5402</P>
+          </Address>
+        </SMV>
+      </ConnectedAP>
+    </SubNetwork>
+  </Communication>
+  <IED name="MU_GEN" manufacturer="" configVersion="" originalSclVersion="2007" originalSclRevision="B" originalSclRelease="4" desc="MU_GEN">
+    <Services>
+      <ClientServices goose="true" sv="false" gsse="false" bufReport="false" unbufReport="false" readLog="false" supportsLdName="true" />
+      <GetDirectory></GetDirectory>
+      <ReadWrite></ReadWrite>
+      <GetDataObjectDefinition></GetDataObjectDefinition>
+      <SettingGroups>
+        <SGEdit></SGEdit>
+      </SettingGroups>
+      <GetDataSetValue></GetDataSetValue>
+      <DataSetDirectory></DataSetDirectory>
+      <GetCBValues></GetCBValues>
+      <ConfLdName></ConfLdName>
+      <GOOSE max="16"></GOOSE>
+      <SMVsc max="4"></SMVsc>
+    </Services>
+    <AccessPoint name="Pr">
+      <Server>
+        <Authentication none="true"></Authentication>
+        <LDevice inst="Mestre" ldName="MU_GEN_Mestre" desc="Mestre">
+          <LN0 lnType="LLN0_CEMIG" lnClass="LLN0" inst="">
+            <DataSet name="SVVao">
+              <!-- Corrente TC Vm -->
+              <FCDA ldInst="TC_" prefix="VM_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TC_" prefix="VM_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="q" fc="MX"></FCDA>
+              <!-- Corrente TC Az -->
+              <FCDA ldInst="TC_" prefix="AZ_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TC_" prefix="AZ_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="q" fc="MX"></FCDA>
+              <!-- Corrente TC Br -->
+              <FCDA ldInst="TC_" prefix="BR_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TC_" prefix="BR_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="q" fc="MX"></FCDA>
+              <!-- Corrente TC N -->
+              <FCDA ldInst="TC_" prefix="N_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TC_" prefix="N_" lnClass="TCTR" lnInst="1" doName="AmpSv" daName="q" fc="MX"></FCDA>
+              <!-- Tensão no TP Vm -->
+              <FCDA ldInst="TP_" prefix="VM_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TP_" prefix="VM_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="q" fc="MX"></FCDA>
+              <!-- Tensão no TP Az -->
+              <FCDA ldInst="TP_" prefix="AZ_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TP_" prefix="AZ_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="q" fc="MX"></FCDA>
+              <!-- Tensão no TP Br -->
+              <FCDA ldInst="TP_" prefix="BR_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TP_" prefix="BR_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="q" fc="MX"></FCDA>
+              <!-- Tensão no TP N -->
+              <FCDA ldInst="TP_" prefix="N_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="instMag.i" fc="MX"></FCDA>
+              <FCDA ldInst="TP_" prefix="N_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="q" fc="MX"></FCDA>
+            </DataSet>
+            <SampledValueControl name="SV_Vao" datSet="SVVao" confRev="1" smvID="SV_Vao_MU_GEN" smpRate="4800" multicast="true" nofASDU="1">
+              <SmvOpts sampleRate="false" sampleSynchronized="true" refreshTime="false" dataSet="false" security="false"></SmvOpts>
+            </SampledValueControl>
+          </LN0>
+          <LN prefix="STATUS_" lnClass="LPHD" inst="1" lnType="LPHD_CEMIG" desc="STATUS_1" />
+        </LDevice>
+        <LDevice inst="TC_" ldName="MU_GEN_TC_" desc="TC_">
+          <LN0 lnType="LLN0_CEMIG" lnClass="LLN0" inst="" />
+          <LN prefix="VM_" lnClass="TCTR" inst="1" lnType="TCTR_CEMIG" desc="VM_1" />
+          <LN prefix="AZ_" lnClass="TCTR" inst="1" lnType="TCTR_CEMIG" desc="AZ_1" />
+          <LN prefix="BR_" lnClass="TCTR" inst="1" lnType="TCTR_CEMIG" desc="BR_1"></LN>
+          <LN prefix="N_" lnClass="TCTR" inst="1" lnType="TCTR_CEMIG" desc="N_1" />
+        </LDevice>
+        <LDevice inst="TP_" ldName="MU_GEN_TP_" desc="TP_">
+          <LN0 lnType="LLN0_CEMIG" lnClass="LLN0" inst="" />
+          <LN prefix="VM_" lnClass="TVTR" inst="1" lnType="TVTR_CEMIG" desc="VM_1" />
+          <LN prefix="AZ_" lnClass="TVTR" inst="1" lnType="TVTR_CEMIG" desc="AZ_1" />
+          <LN prefix="BR_" lnClass="TVTR" inst="1" lnType="TVTR_CEMIG" desc="BR_1" />
+          <LN prefix="N_" lnClass="TVTR" inst="1" lnType="TVTR_CEMIG" desc="N_1" />
+        </LDevice>
+      </Server>
+    </AccessPoint>
+  </IED>
+  <!-- == Padrões de Estruturas de dados == -->
+  <DataTypeTemplates>
+    <LNodeType id="GGIO_CEMIG" lnClass="GGIO">
+      <DO name="Beh" type="ENS_Beh" desc="Status do modo (N/T/B)" />
+      <DO name="Ind1" type="SPS" desc="Indicação binária genérica 1" />
+      <DO name="Ind2" type="SPS" desc="Indicação binária genérica 2" />
+      <DO name="Ind3" type="SPS" desc="Indicação binária genérica 3" />
+      <DO name="Ind4" type="SPS" desc="Indicação binária genérica 4" />
+      <DO name="Ind5" type="SPS" desc="Indicação binária genérica 5" />
+      <DO name="Ind6" type="SPS" desc="Indicação binária genérica 6" />
+      <DO name="Ind7" type="SPS" desc="Indicação binária genérica 7" />
+      <DO name="Ind8" type="SPS" desc="Indicação binária genérica 8" />
+      <DO name="Ind9" type="SPS" desc="Indicação binária genérica 9" />
+      <DO name="Ind10" type="SPS" desc="Indicação binária genérica 10" />
+      <DO name="Ind11" type="SPS" desc="Indicação binária genérica 11" />
+      <DO name="Ind12" type="SPS" desc="Indicação binária genérica 12" />
+      <DO name="Ind13" type="SPS" desc="Indicação binária genérica 13" />
+      <DO name="Ind14" type="SPS" desc="Indicação binária genérica 14" />
+      <DO name="Ind15" type="SPS" desc="Indicação binária genérica 15" />
+      <DO name="Ind16" type="SPS" desc="Indicação binária genérica 16" />
+      <DO name="Ind17" type="SPS" desc="Indicação binária genérica 17" />
+      <DO name="Ind18" type="SPS" desc="Indicação binária genérica 18" />
+      <DO name="Ind19" type="SPS" desc="Indicação binária genérica 19" />
+      <DO name="Ind20" type="SPS" desc="Indicação binária genérica 20" />
+      <DO name="Ind21" type="SPS" desc="Indicação binária genérica 21" />
+      <DO name="Ind22" type="SPS" desc="Indicação binária genérica 22" />
+      <DO name="Ind23" type="SPS" desc="Indicação binária genérica 23" />
+      <DO name="Ind24" type="SPS" desc="Indicação binária genérica 24" />
+      <DO name="Ind25" type="SPS" desc="Indicação binária genérica 25" />
+      <DO name="Ind26" type="SPS" desc="Indicação binária genérica 26" />
+      <DO name="Ind27" type="SPS" desc="Indicação binária genérica 27" />
+      <DO name="Ind28" type="SPS" desc="Indicação binária genérica 28" />
+      <DO name="Ind29" type="SPS" desc="Indicação binária genérica 29" />
+      <DO name="Ind30" type="SPS" desc="Indicação binária genérica 30" />
+      <DO name="Ind31" type="SPS" desc="Indicação binária genérica 31" />
+      <DO name="Ind32" type="SPS" desc="Indicação binária genérica 32" />
+      <DO name="Ind33" type="SPS" desc="Indicação binária genérica 33" />
+      <DO name="Ind34" type="SPS" desc="Indicação binária genérica 34" />
+      <DO name="Ind35" type="SPS" desc="Indicação binária genérica 35" />
+      <DO name="Ind36" type="SPS" desc="Indicação binária genérica 36" />
+      <DO name="Ind37" type="SPS" desc="Indicação binária genérica 37" />
+      <DO name="Ind38" type="SPS" desc="Indicação binária genérica 38" />
+      <DO name="Ind39" type="SPS" desc="Indicação binária genérica 39" />
+      <DO name="Ind40" type="SPS" desc="Indicação binária genérica 40" />
+      <DO name="Ind41" type="SPS" desc="Indicação binária genérica 41" />
+      <DO name="Ind42" type="SPS" desc="Indicação binária genérica 42" />
+      <DO name="Ind43" type="SPS" desc="Indicação binária genérica 43" />
+      <DO name="Ind44" type="SPS" desc="Indicação binária genérica 44" />
+      <DO name="Ind45" type="SPS" desc="Indicação binária genérica 45" />
+      <DO name="Ind46" type="SPS" desc="Indicação binária genérica 46" />
+      <DO name="Ind47" type="SPS" desc="Indicação binária genérica 47" />
+      <DO name="Ind48" type="SPS" desc="Indicação binária genérica 48" />
+      <DO name="Ind49" type="SPS" desc="Indicação binária genérica 49" />
+      <DO name="Ind50" type="SPS" desc="Indicação binária genérica 50" />
+      <DO name="Ind51" type="SPS" desc="Indicação binária genérica 51" />
+      <DO name="Ind52" type="SPS" desc="Indicação binária genérica 52" />
+      <DO name="Ind53" type="SPS" desc="Indicação binária genérica 53" />
+      <DO name="Ind54" type="SPS" desc="Indicação binária genérica 54" />
+      <DO name="Ind55" type="SPS" desc="Indicação binária genérica 55" />
+      <DO name="Ind56" type="SPS" desc="Indicação binária genérica 56" />
+      <DO name="Ind57" type="SPS" desc="Indicação binária genérica 57" />
+      <DO name="Ind58" type="SPS" desc="Indicação binária genérica 58" />
+      <DO name="Ind59" type="SPS" desc="Indicação binária genérica 59" />
+      <DO name="Ind60" type="SPS" desc="Indicação binária genérica 60" />
+      <DO name="Ind61" type="SPS" desc="Indicação binária genérica 61" />
+      <DO name="Ind62" type="SPS" desc="Indicação binária genérica 62" />
+      <DO name="Ind63" type="SPS" desc="Indicação binária genérica 63" />
+      <DO name="Ind64" type="SPS" desc="Indicação binária genérica 64" />
+      <DO name="SPCSO1" type="SPC" desc="Comando simples genérico 1" />
+      <DO name="SPCSO2" type="SPC" desc="Comando simples genérico 2" />
+      <DO name="SPCSO3" type="SPC" desc="Comando simples genérico 3" />
+      <DO name="SPCSO4" type="SPC" desc="Comando simples genérico 4" />
+      <DO name="SPCSO5" type="SPC" desc="Comando simples genérico 5" />
+      <DO name="SPCSO6" type="SPC" desc="Comando simples genérico 6" />
+      <DO name="SPCSO7" type="SPC" desc="Comando simples genérico 7" />
+      <DO name="SPCSO8" type="SPC" desc="Comando simples genérico 8" />
+      <DO name="SPCSO9" type="SPC" desc="Comando simples genérico 9" />
+      <DO name="SPCSO10" type="SPC" desc="Comando simples genérico 10" />
+      <DO name="SPCSO11" type="SPC" desc="Comando simples genérico 11" />
+      <DO name="SPCSO12" type="SPC" desc="Comando simples genérico 12" />
+      <DO name="SPCSO13" type="SPC" desc="Comando simples genérico 13" />
+      <DO name="SPCSO14" type="SPC" desc="Comando simples genérico 14" />
+      <DO name="SPCSO15" type="SPC" desc="Comando simples genérico 15" />
+      <DO name="SPCSO16" type="SPC" desc="Comando simples genérico 16" />
+      <DO name="DPCSO1" type="DPC" desc="Comando duplo genérico 1" />
+      <DO name="DPCSO2" type="DPC" desc="Comando duplo genérico 2" />
+      <DO name="DPCSO3" type="DPC" desc="Comando duplo genérico 3" />
+      <DO name="DPCSO4" type="DPC" desc="Comando duplo genérico 4" />
+      <DO name="DPCSO5" type="DPC" desc="Comando duplo genérico 5" />
+      <DO name="DPCSO6" type="DPC" desc="Comando duplo genérico 6" />
+      <DO name="DPCSO7" type="DPC" desc="Comando duplo genérico 7" />
+      <DO name="DPCSO8" type="DPC" desc="Comando duplo genérico 8" />
+      <DO name="AnIn1" type="MV" desc="Entrada analógica sinal genérico 1" />
+      <DO name="AnIn2" type="MV" desc="Entrada analógica sinal genérico 2" />
+      <DO name="AnIn3" type="MV" desc="Entrada analógica sinal genérico 3" />
+      <DO name="AnIn4" type="MV" desc="Entrada analógica sinal genérico 4" />
+      <DO name="AnIn5" type="MV" desc="Entrada analógica sinal genérico 5" />
+      <DO name="AnIn6" type="MV" desc="Entrada analógica sinal genérico 6" />
+      <DO name="AnIn7" type="MV" desc="Entrada analógica sinal genérico 7" />
+      <DO name="AnIn8" type="MV" desc="Entrada analógica sinal genérico 8" />
+    </LNodeType>
+    <LNodeType id="LLN0_CEMIG" lnClass="LLN0">
+      <DO name="NamPlt" type="LPL" desc="Nome do LD" />
+      <DO name="Beh" type="ENS_Beh" desc="Status do modo (N/T/B)" />
+      <DO name="Health" type="ENS_heal" desc="Indicador de saúde" />
+      <DO name="Mod" type="ENS_mod" desc="Seta o modo (N/T/B)" />
+      <DO name="LocKey" type="SPS" desc="Local/Remoto" />
+    </LNodeType>
+    <LNodeType id="LPHD_CEMIG" lnClass="LPHD">
+      <DO name="PhyNam" type="DPL" desc="Identificação do IED (Modelo, Fabr, etc)" />
+      <DO name="PhyHealth" type="ENS_ied" desc="Saúde do IED" />
+      <DO name="Proxy" type="SPS" desc="IED como proxy" />
+    </LNodeType>
+    <LNodeType id="TCTR_CEMIG" lnClass="TCTR">
+      <DO name="Beh" type="ENS_Beh" desc="Status do modo (N/T/B)" />
+      <DO name="AmpSv" type="SAV" desc="Corrente no TC - fase" />
+      <DO name="EEHealth" type="ENS_heal" desc="Saúde do enrolamento do TC (enrolamento aberto)" />
+    </LNodeType>
+    <LNodeType id="TVTR_CEMIG" lnClass="TVTR">
+      <DO name="Beh" type="ENS_Beh" desc="Status do modo (N/T/B)" />
+      <DO name="FuFail" type="SPS" desc="Minidisjuntor ou fusível aberto no TP Vm" />
+      <DO name="VolSv" type="SAV" desc="Tensão no TP - fase" />
+    </LNodeType>
+    <DOType id="DPC" cdc="DPC">
+      <DA name="stVal" bType="Dbpos" fc="ST" dchg="true" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+      <DA name="ctlModel" bType="Enum" fc="CF" dchg="true" />
+    </DOType>
+    <DOType id="DPL" cdc="DPL">
+      <DA name="vendor" bType="VisString255" fc="DC" />
+      <DA name="model" bType="VisString255" fc="DC" />
+      <DA name="name" bType="VisString255" fc="DC" />
+      <DA name="owner" bType="VisString255" fc="DC" />
+    </DOType>
+    <DOType id="ENS_Beh" cdc="ENS">
+      <DA name="stVal" bType="Enum" fc="ST" dchg="true" dupd="true" type="Enum_Beh" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="ENS_heal" cdc="ENS">
+      <DA name="stVal" bType="Enum" fc="ST" dchg="true" dupd="true" type="Enum_heal" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="ENS_ied" cdc="ENS">
+      <DA name="stVal" bType="Enum" fc="ST" dchg="true" dupd="true" type="Enum_ied" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="ENS_mod" cdc="ENS">
+      <DA name="stVal" bType="Enum" fc="ST" dchg="true" dupd="true" type="Enum_mod" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="INS" cdc="INS">
+      <DA name="stVal" bType="INT32" fc="ST" dchg="true" dupd="true" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="LPL" cdc="LPL">
+      <DA name="vendor" bType="VisString255" fc="DC" />
+      <DA name="swRev" bType="VisString255" fc="DC" />
+      <DA name="configRev" bType="VisString255" fc="DC" />
+    </DOType>
+    <DOType id="MV" cdc="MV">
+      <DA name="mag" bType="Struct" fc="MX" dchg="true" dupd="true" type="AnalogueValue" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="SAV" cdc="SAV">
+      <DA name="instMag" bType="Struct" fc="MX" type="AnalogueValue" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="SPC" cdc="SPC">
+      <DA name="ctlModel" bType="Enum" fc="CF" dchg="true" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DOType id="SPS" cdc="SPS">
+      <DA name="stVal" bType="BOOLEAN" fc="ST" dchg="true" />
+      <DA name="q" bType="Quality" fc="ST" qchg="true" />
+      <DA name="t" bType="Timestamp" fc="ST" />
+    </DOType>
+    <DAType id="AnalogueValue">
+      <BDA name="i" bType="INT32" />
+      <BDA name="f" bType="FLOAT32" />
+    </DAType>
+    <DAType id="ValWithTrans">
+      <BDA name="posVal" bType="INT8" />
+      <BDA name="transInd" bType="BOOLEAN" />
+    </DAType>
+    <DAType id="Vector">
+      <BDA name="mag" bType="Struct" type="AnalogueValue" />
+      <BDA name="ang" bType="Struct" type="AnalogueValue" />
+    </DAType>
+    <!-- * Behaviour _ Status do modo (N/T/B) * -->
+    <EnumType id="Enum_Beh">
+      <EnumVal ord="1">on</EnumVal>
+      <EnumVal ord="2">blocked</EnumVal>
+      <EnumVal ord="3">test</EnumVal>
+      <EnumVal ord="4">test/blocked</EnumVal>
+      <EnumVal ord="5">off</EnumVal>
+    </EnumType>
+    <!-- * Health _ Indicador de saúde * -->
+    <EnumType id="Enum_heal">
+      <EnumVal ord="1">Ok</EnumVal>
+      <EnumVal ord="2">Warning</EnumVal>
+      <EnumVal ord="3">Alarm</EnumVal>
+    </EnumType>
+    <!-- * PhyHealth _ Indicador de saúde do IED * -->
+    <EnumType id="Enum_ied">
+      <EnumVal ord="1">Ok</EnumVal>
+      <EnumVal ord="2">Warning</EnumVal>
+      <EnumVal ord="3">Alarm</EnumVal>
+    </EnumType>
+    <!-- * Controle do modo (N/T/B) * -->
+    <EnumType id="Enum_mod">
+      <EnumVal ord="1">on</EnumVal>
+      <EnumVal ord="2">blocked</EnumVal>
+      <EnumVal ord="3">test</EnumVal>
+      <EnumVal ord="4">test/blocked</EnumVal>
+      <EnumVal ord="5">off</EnumVal>
+    </EnumType>
+  </DataTypeTemplates>
+</SCL>
