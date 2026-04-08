@@ -73,7 +73,7 @@
               <FCDA ldInst="TP_" prefix="N_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="instMag.i" fc="MX"></FCDA>
               <FCDA ldInst="TP_" prefix="N_" lnClass="TVTR" lnInst="1" doName="VolSv" daName="q" fc="MX"></FCDA>
             </DataSet>
-            <SampledValueControl name="SV_Vao" datSet="SVVao" confRev="1" smvID="SV_Vao_MU_GEN" smpRate="4800" multicast="true" nofASDU="1">
+            <SampledValueControl name="SV_Vao" datSet="SVVao" confRev="1" smvID="SV_Vao_MU_GEN" smpRate="4800" multicast="true" nofASDU="1" smpMod="SmpPerSec">
               <SmvOpts sampleRate="false" sampleSynchronized="true" refreshTime="false" dataSet="false" security="false"></SmvOpts>
             </SampledValueControl>
           </LN0>
