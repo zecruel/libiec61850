@@ -19,7 +19,7 @@
 #include <math.h>
 
 #ifndef M_PI
-  #define M_PI 3.14159265358979323846
+#define M_PI 3.14159265358979323846
 #endif
 
 static int running = 0;
@@ -53,20 +53,30 @@ void * pthread_ptp(void * argument) {
       case -1: printf("hs fail"); break;
       case 0: break;
       default:{
-       int packet_size = Ethernet_receivePacket(sock, buffer, 1518);
-       //printf("%d\n", packet_size);
-       if (packet_size > 57) {
-	       if (buffer[14] == 0x08){
-		       uint32_t ns = buffer[57] | buffer[56]<<8 | buffer[55]<<16 | buffer[54] << 24;
-		       //printf("%fs ",(float) ns/1000000000);
-		      smp_cnt = 4800 * (float) ns/1000000000;
-		      //printf("smpCnt = %d\n", smp_cnt);
-		      sync = 1;
-      }}}
+        int packet_size = Ethernet_receivePacket(sock, buffer, 1518);
+        //printf("%d\n", packet_size);
+        if (packet_size > 57) {
+          if (buffer[14] == 0x00 || buffer[14] == 0x08){
+            uint64_t corr_ns = 0;
+            corr_ns = buffer[27] | buffer[26]<<8 | buffer[25]<<16 |
+              buffer[24] << 24 | buffer[23]<<32 | buffer[22] << 48;
+            uint64_t sec = 0;
+            sec = buffer[53] | buffer[52]<<8 | buffer[51]<<16 |
+              buffer[50] << 24 | buffer[49]<<32 | buffer[48] << 48;
+            uint32_t ns = buffer[57] | buffer[56]<<8 | buffer[55]<<16 | buffer[54] << 24;
+            if (sec > 0){
+              //ns += corr_ns;
+              //printf("%fs ",(float) ns/1000000000);
+              smp_cnt = 4800 * (float) ns/1000000000;
+              //printf("smpCnt = %d\n", smp_cnt);
+              //printf("corr_ns=%llu\tsec=%llu\tns=%llu\tsmp=%d\n", corr_ns, sec, ns, sync);
+              sync = 1;
+            }
+          }
+        }
+      }
     }
   }
-
-
   Ethernet_destroySocket(sock);
 }
 
@@ -74,10 +84,17 @@ void * pthread_task(void * argument) {
   struct sv_param *param = argument;
   if (!argument) return (void*)"Error in param";
 
-  SVPublisher svPublisher = SVPublisher_create(NULL, param->interface);
+  CommParameters parameters = {
+    .vlanPriority = 5,
+    .vlanId = 176,
+    .appId = 0x5402,
+    .dstAddress = {0x01, 0x0c, 0xcd, 0x04, 0x09, 0x82}
+  };
+
+  SVPublisher svPublisher = SVPublisher_create(&parameters, param->interface);
   if (!svPublisher) return (void*)"error in publisher";
-  
-  SVPublisher_ASDU asdu = SVPublisher_addASDU(svPublisher, param->asdu_name, NULL, 1);
+
+  SVPublisher_ASDU asdu = SVPublisher_addASDU(svPublisher, param->asdu_name, NULL, 40001);
   //SVPublisher_ASDU_setSmpSynch(asdu, 2);
 
   int amp1 = SVPublisher_ASDU_addINT32(asdu);
@@ -88,7 +105,7 @@ void * pthread_task(void * argument) {
   int amp3q = SVPublisher_ASDU_addQuality(asdu);
   int amp4 = SVPublisher_ASDU_addINT32(asdu);
   int amp4q = SVPublisher_ASDU_addQuality(asdu);
-  
+
   int vol1 = SVPublisher_ASDU_addINT32(asdu);
   int vol1q = SVPublisher_ASDU_addQuality(asdu);
   int vol2 = SVPublisher_ASDU_addINT32(asdu);
@@ -100,11 +117,11 @@ void * pthread_task(void * argument) {
 
   SVPublisher_ASDU_setSmpCntWrap(asdu, 4800);
   //SVPublisher_ASDU_setRefrTm(asdu, 2);
-  
+
 
   SVPublisher_setupComplete(svPublisher);
-  
-  
+
+
   //const char* thread_name = (const char*)argument;
 
   // =============================================================================================
@@ -121,13 +138,14 @@ void * pthread_task(void * argument) {
   uint64_t last_wake_time_ns = nanos();
   //printf("thread_name = %s\n", thread_name);
   printf("loop period = %lu ns (%lu us); freq = %.1f Hz\n",
-      US_TO_NS(PERIOD_US), PERIOD_US, 1.0/US_TO_SEC((double)PERIOD_US));
+         US_TO_NS(PERIOD_US), PERIOD_US, 1.0/US_TO_SEC((double)PERIOD_US));
 
-  
+
   Quality q = QUALITY_VALIDITY_GOOD;
 
   int vol = (int) (80000.f * sqrt(2));
   int amp = 750;
+  int corr_cnt;
   float phaseAngle = 0.15f;
 
   int voltageA;
@@ -142,20 +160,22 @@ void * pthread_task(void * argument) {
   sleep_ms( 3000);
 
   int sampleCount = smp_cnt;
-  
+
   while (running) {
-	  if (sync){
-		  sync = 0;
-    if (sampleCount != smp_cnt){
-       printf("smp_int = %d, smp_ptp = %d \n", sampleCount, smp_cnt);
-       sampleCount = smp_cnt;
-    }}
+    if (sync){
+      sync = 0;
+      corr_cnt = sampleCount - smp_cnt;
+      if (corr_cnt != 0){
+        printf("smp_int = %d, smp_ptp = %d \n", sampleCount, smp_cnt);
+        if (abs(corr_cnt) > 5) sampleCount = smp_cnt;
+      }
+    }
     // Wait for the next cycle.
-    
+
     //sleep_until_us(&last_wake_time_us, PERIOD_US);
-    sleep_until_ns(&last_wake_time_ns, 208343);
-    
-    
+    sleep_until_ns(&last_wake_time_ns, 208343 + (corr_cnt * 20));
+
+
     /* update measurement values */
     int samplePoint = sampleCount % 80;
 
@@ -197,8 +217,10 @@ void * pthread_task(void * argument) {
     SVPublisher_ASDU_setQuality(asdu, vol4q, q);
 
     //SVPublisher_ASDU_setRefrTmNs(asdu, Hal_getTimeInNs());
-
-    SVPublisher_ASDU_setSmpCnt(asdu, (uint16_t) sampleCount);
+    // trapaça
+    int trick = sampleCount - 6;
+    if (trick < 0) trick = 4799 + trick;
+    SVPublisher_ASDU_setSmpCnt(asdu, (uint16_t) trick); //sampleCount);
 
     SVPublisher_publish(svPublisher);
 
@@ -213,15 +235,15 @@ int main(int argc, char** argv){
   struct sv_param param;
 
   if (argc > 1)
-      param.interface = argv[1];
+    param.interface = argv[1];
   else
-      param.interface = "eth0";
-  
-  param.asdu_name = "svtst";
-  
-  
+    param.interface = "eth0";
+
+  param.asdu_name = "SIPMU0103";
+
+
   signal(SIGINT, handle_signal); // Register signal handler for SIGINT
-  
+
   printf("Activating realtime scheduler.\n");
   use_realtime_scheduler();
 
@@ -229,29 +251,29 @@ int main(int argc, char** argv){
 
   pthread_t thread, ptp_r;
   //const char thread_name[] = "some thread name"; // this can really be ANY argument
-  
+
   int retcode = pthread_create(&thread, NULL, pthread_task, (void*)&param);
   running = 1;
   if (retcode != 0){
-      printf("Failed to create pthread. retcode = %i: %s\n", retcode, strerror(retcode));
+    printf("Failed to create pthread. retcode = %i: %s\n", retcode, strerror(retcode));
   }
-  
+
   retcode = pthread_create(&ptp_r, NULL, pthread_ptp, (void*)&param);
   if (retcode != 0){
-      printf("Failed to create ptp. retcode = %i: %s\n", retcode, strerror(retcode));
+    printf("Failed to create ptp. retcode = %i: %s\n", retcode, strerror(retcode));
   }
-  
+
 
   printf("Waiting for signal...\n");
   pause(); // Suspend program execution until a signal arrives
   printf("Program resumed after signal.\n");
-  
+
   const char * return_message;
   retcode = pthread_join(thread, (void**)&return_message);
   if (retcode != 0)
   {
-      printf("Failed to join (terminate) pthread. retcode = %i: %s\n",
-          retcode, strerror(retcode));
+    printf("Failed to join (terminate) pthread. retcode = %i: %s\n",
+           retcode, strerror(retcode));
   }
 
   printf("\nFinal message from thread = %s\n", return_message);

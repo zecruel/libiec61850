@@ -18,7 +18,7 @@
 #include <time.h>
 
 void set_nonblocking(int non) {
-    int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
+  int flags = fcntl(STDIN_FILENO, F_GETFL, 0);
   if(non)
     fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK);
   else
@@ -29,6 +29,7 @@ void set_nonblocking(int non) {
 #define MAX_BUF 2*SMP_S
 
 struct Buffer{
+  int AppId;
   int32_t data[MAX_BUF];
   int pos;
   int lock;
@@ -54,7 +55,7 @@ static bool running = true;
 
 void sigint_handler(int signalId)
 {
-    running = 0;
+  running = 0;
 }
 
 void * pthread_ptp(void * argument) {
@@ -75,26 +76,29 @@ void * pthread_ptp(void * argument) {
       case -1: printf("hs fail"); break;
       case 0: break;
       default:{
-       int packet_size = Ethernet_receivePacket(sock, buffer, 1518);
-       //printf("%d\n", packet_size);
-       if (packet_size > 57) {
-	       if (buffer[14] == 0x00 || buffer[14] == 0x08){
+        int packet_size = Ethernet_receivePacket(sock, buffer, 1518);
+        //printf("%d\n", packet_size);
+        if (packet_size > 57) {
+          if (buffer[14] == 0x00 || buffer[14] == 0x08){
             uint64_t corr_ns = 0;
-		       corr_ns = buffer[27] | buffer[26]<<8 | buffer[25]<<16 |
+            corr_ns = buffer[27] | buffer[26]<<8 | buffer[25]<<16 |
               buffer[24] << 24 | buffer[23]<<32 | buffer[22] << 48;
-           uint64_t sec = 0;
-		       sec = buffer[53] | buffer[52]<<8 | buffer[51]<<16 |
+            uint64_t sec = 0;
+            sec = buffer[53] | buffer[52]<<8 | buffer[51]<<16 |
               buffer[50] << 24 | buffer[49]<<32 | buffer[48] << 48;
-		       uint32_t ns = buffer[57] | buffer[56]<<8 | buffer[55]<<16 | buffer[54] << 24;
-          if (sec > 0){
+            uint32_t ns = buffer[57] | buffer[56]<<8 | buffer[55]<<16 | buffer[54] << 24;
+            if (sec > 0){
               ns += corr_ns;
               sync = 4800 * (float) ns/1000000000;
-		       //printf("%fs ",(float) ns/1000000000);
-		      //smp_cnt = 4800 * (float) ns/1000000000;
-		      //printf("smpCnt = %d\n", smp_cnt);
+              //printf("%fs ",(float) ns/1000000000);
+              //smp_cnt = 4800 * (float) ns/1000000000;
+              //printf("smpCnt = %d\n", smp_cnt);
               //printf("corr_ns=%llu\tsec=%llu\tns=%llu\tsmp=%d\n", corr_ns, sec, ns, sync);
-		      //sync = 1;
-      }}}}
+              //sync = 1;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -107,26 +111,27 @@ void * pthread_ptp(void * argument) {
 static void
 svUpdateListener (SVSubscriber subscriber, void* parameter, SVSubscriber_ASDU asdu)
 {
-    //printf("svUpdateListener called\n");
-    struct Buffer *buf = parameter; 
-    const char* svID = SVSubscriber_ASDU_getSvId(asdu);
+  //printf("svUpdateListener called\n");
+  struct Buffer *buf = parameter; 
+  //const char* svID = SVSubscriber_ASDU_getSvId(asdu);
+  int app_id = buf->AppId;
 
-    //if (svID != NULL)
-      //  printf("  svID=(%s)\n", svID);
+  //if (svID != NULL)
+  //  printf("  svID=(%s)\n", svID);
 
-    smp_cnt = SVSubscriber_ASDU_getSmpCnt(asdu);
-    //buf->data[buf->pos] = 0;
-      
-    if (buf->pos % SMP_S != smp_cnt){
-      printf ("pos=%d, cnt=%d\n", buf->pos, smp_cnt);
-      buf->pos = smp_cnt;
-    }
-    
-    last_buf_pos = buf->pos;
+  smp_cnt = SVSubscriber_ASDU_getSmpCnt(asdu);
+  //buf->data[buf->pos] = 0;
 
-    //printf("  confRev: %u\n", SVSubscriber_ASDU_getConfRev(asdu));
+  if (buf->pos % SMP_S != smp_cnt){
+    printf ("pos=%d, cnt=%d\n", buf->pos, smp_cnt);
+    buf->pos = smp_cnt;
+  }
 
-    /*
+  last_buf_pos = buf->pos;
+
+  //printf("  confRev: %u\n", SVSubscriber_ASDU_getConfRev(asdu));
+
+  /*
      * Access to the data requires a priori knowledge of the data set.
      * For this example we assume a data set consisting of FLOAT32 values.
      * A FLOAT32 value is encoded as 4 bytes. You can find the first FLOAT32
@@ -136,19 +141,19 @@ svUpdateListener (SVSubscriber subscriber, void* parameter, SVSubscriber_ASDU as
      * To prevent damages due configuration, please check the length of the
      * data block of the SV message before accessing the data.
      */
-    if (SVSubscriber_ASDU_getDataSize(asdu) >= 96) {
-      if(!trigged || !buf->lock){
-        buf->data[buf->pos] = SVSubscriber_ASDU_getINT32(asdu, 0);
-        //printf("%s\t%d:\t%d\n", svID, buf->pos, buf->data[buf->pos]);
-        //printf("   DATA[1]: %f\n", SVSubscriber_ASDU_getINT32(asdu, 8));
-      }
+  if (SVSubscriber_ASDU_getDataSize(asdu) >= 96) {
+    if(!trigged || !buf->lock){
+      buf->data[buf->pos] = SVSubscriber_ASDU_getINT32(asdu, 0);
+      //if (app_id == 0x540d) printf("%s\t%d:\t%d\n", svID, buf->pos, buf->data[buf->pos]);
+      //printf("   DATA[1]: %f\n", SVSubscriber_ASDU_getINT32(asdu, 8));
     }
-    if(trigged && buf->pos == end_buf_pos){
+  }
+  if(trigged && buf->pos == end_buf_pos){
     osc_complete++;
     buf->lock = 1;
   }
-    buf->pos++;
-    if (buf->pos >= MAX_BUF) buf->pos = 0;
+  buf->pos++;
+  if (buf->pos >= MAX_BUF) buf->pos = 0;
 }
 
 void
@@ -156,10 +161,10 @@ gooseListener(GooseSubscriber subscriber, void* parameter)
 {
 
 
-    int appId = GooseSubscriber_getAppId(subscriber);
+  int appId = GooseSubscriber_getAppId(subscriber);
 
   if (appId == 0x1807){
-/*
+    /*
     printf("GOOSE event:\n");
     printf("  vlanTag: %s\n", GooseSubscriber_isVlanSet(subscriber) ? "found" : "NOT found");
     if (GooseSubscriber_isVlanSet(subscriber))
@@ -194,18 +199,18 @@ gooseListener(GooseSubscriber subscriber, void* parameter)
     int trigger = MmsValue_getBoolean(trig_v);
     if (trigger) {
       printf ("FALTA++++++++++++++++++++++++++++++++++++++++++\n");
-    if (!trigged){
-      trigged = 1;
-      trg_smp_cnt = last_buf_pos;
-      start_buf_pos = last_buf_pos - 1440;
-      if(start_buf_pos < 0) start_buf_pos = MAX_BUF + start_buf_pos;
-      end_buf_pos = last_buf_pos - 1441;
-      if(end_buf_pos < 0) end_buf_pos = MAX_BUF + end_buf_pos;
-          printf("start = %d, end = %d\n", start_buf_pos, end_buf_pos);
-    }
+      if (!trigged){
+        trigged = 1;
+        trg_smp_cnt = last_buf_pos;
+        start_buf_pos = last_buf_pos - 1440;
+        if(start_buf_pos < 0) start_buf_pos = MAX_BUF + start_buf_pos;
+        end_buf_pos = last_buf_pos - 1441;
+        if(end_buf_pos < 0) end_buf_pos = MAX_BUF + end_buf_pos;
+        printf("start = %d, end = %d\n", start_buf_pos, end_buf_pos);
+      }
     }
 
-/*
+    /*
     char buffer[1024];
 
     MmsValue_printToBuffer(values, buffer, 1024);
@@ -221,14 +226,14 @@ int
 main(int argc, char** argv)
 {
   SVReceiver SV_receiver = SVReceiver_create();
-  
-    GooseReceiver receiver = GooseReceiver_create();
+
+  GooseReceiver receiver = GooseReceiver_create();
 
 
-    memset(buf_vm.data, 0, MAX_BUF*sizeof(int32_t));
-    memset(buf_az.data, 0, MAX_BUF*sizeof(int32_t));
-    memset(buf_br.data, 0, MAX_BUF*sizeof(int32_t));
-    memset(buf_r.data, 0, MAX_BUF*sizeof(int32_t));
+  memset(buf_vm.data, 0, MAX_BUF*sizeof(int32_t));
+  memset(buf_az.data, 0, MAX_BUF*sizeof(int32_t));
+  memset(buf_br.data, 0, MAX_BUF*sizeof(int32_t));
+  memset(buf_r.data, 0, MAX_BUF*sizeof(int32_t));
 
 
   buf_vm.lock = 0;
@@ -236,99 +241,104 @@ main(int argc, char** argv)
   buf_br.lock = 0;
   buf_r.lock = 0;
 
-    char *interface;
+  char *interface;
 
-    if (argc > 1) {
-      SVReceiver_setInterfaceId(SV_receiver, argv[1]);
-      GooseReceiver_setInterfaceId(receiver, argv[1]);
-		  printf("Set interface id: %s\n", argv[1]);
-      interface = argv[1];
-    }
-    else {
-      printf("Using interface eth0\n");
-      SVReceiver_setInterfaceId(SV_receiver, "eth0");
-      GooseReceiver_setInterfaceId(receiver, "eth0");
-      interface = "eth0";
-    }
-    pthread_t ptp_r;
-    int retcode = pthread_create(&ptp_r, NULL, pthread_ptp, (void*)interface);
-    if (retcode != 0){
-      printf("Failed to create ptp. retcode = %i: %s\n", retcode, strerror(retcode));
-    }
- 
-
-    /* Create a subscriber listening to SV messages with APPID 4000h */
-    SVSubscriber subs_vm = SVSubscriber_create(NULL, 0x5409);
-    SVSubscriber subs_az = SVSubscriber_create(NULL, 0x540b);
-    SVSubscriber subs_br = SVSubscriber_create(NULL, 0x540d);
-    SVSubscriber subs_r = SVSubscriber_create(NULL, 0x540f);
-
-    /* Install a callback handler for the subscriber */
-    SVSubscriber_setListener(subs_vm, svUpdateListener, &buf_vm);
-    SVSubscriber_setListener(subs_az, svUpdateListener, &buf_az);
-    SVSubscriber_setListener(subs_br, svUpdateListener, &buf_br);
-    SVSubscriber_setListener(subs_r, svUpdateListener, &buf_r);
-
-    /* Connect the subscriber to the receiver */
-    SVReceiver_addSubscriber(SV_receiver, subs_vm);
-    SVReceiver_addSubscriber(SV_receiver, subs_az);
-    SVReceiver_addSubscriber(SV_receiver, subs_br);
-    SVReceiver_addSubscriber(SV_receiver, subs_r);
+  if (argc > 1) {
+    SVReceiver_setInterfaceId(SV_receiver, argv[1]);
+    GooseReceiver_setInterfaceId(receiver, argv[1]);
+    printf("Set interface id: %s\n", argv[1]);
+    interface = argv[1];
+  }
+  else {
+    printf("Using interface eth0\n");
+    SVReceiver_setInterfaceId(SV_receiver, "eth0");
+    GooseReceiver_setInterfaceId(receiver, "eth0");
+    interface = "eth0";
+  }
+  pthread_t ptp_r;
+  int retcode = pthread_create(&ptp_r, NULL, pthread_ptp, (void*)interface);
+  if (retcode != 0){
+    printf("Failed to create ptp. retcode = %i: %s\n", retcode, strerror(retcode));
+  }
 
 
-    GooseSubscriber subscriber = GooseSubscriber_create("", NULL);
-    GooseSubscriber_setObserver(subscriber);
-    GooseSubscriber_setListener(subscriber, gooseListener, NULL);
+  /* Create a subscriber listening to SV messages with APPID 4000h */
+  SVSubscriber subs_vm = SVSubscriber_create(NULL, 0x5409);
+  SVSubscriber subs_az = SVSubscriber_create(NULL, 0x540b);
+  SVSubscriber subs_br = SVSubscriber_create(NULL, 0x540d);
+  SVSubscriber subs_r = SVSubscriber_create(NULL, 0x540f);
 
-    GooseReceiver_addSubscriber(receiver, subscriber);
+  buf_vm.AppId = 0x5409;
+  buf_az.AppId = 0x540b;
+  buf_br.AppId = 0x540d;
+  buf_r.AppId = 0x540f;
 
-    GooseReceiver_start(receiver);
+  /* Install a callback handler for the subscriber */
+  SVSubscriber_setListener(subs_vm, svUpdateListener, &buf_vm);
+  SVSubscriber_setListener(subs_az, svUpdateListener, &buf_az);
+  SVSubscriber_setListener(subs_br, svUpdateListener, &buf_br);
+  SVSubscriber_setListener(subs_r, svUpdateListener, &buf_r);
 
-    
+  /* Connect the subscriber to the receiver */
+  SVReceiver_addSubscriber(SV_receiver, subs_vm);
+  SVReceiver_addSubscriber(SV_receiver, subs_az);
+  SVReceiver_addSubscriber(SV_receiver, subs_br);
+  SVReceiver_addSubscriber(SV_receiver, subs_r);
+
+
+  GooseSubscriber subscriber = GooseSubscriber_create("", NULL);
+  GooseSubscriber_setObserver(subscriber);
+  GooseSubscriber_setListener(subscriber, gooseListener, NULL);
+
+  GooseReceiver_addSubscriber(receiver, subscriber);
+
+  GooseReceiver_start(receiver);
 
 
 
-    /* Start listening to SV messages - starts a new receiver background thread */
-    SVReceiver_start(SV_receiver);
-    set_nonblocking(1);
 
-    if (SVReceiver_isRunning(SV_receiver) && GooseReceiver_isRunning(receiver)) {
-        signal(SIGINT, sigint_handler);
 
-        while (running){ /* infinite loop */
-          if(osc_complete > 3){
+  /* Start listening to SV messages - starts a new receiver background thread */
+  SVReceiver_start(SV_receiver);
+  set_nonblocking(1);
+
+  if (SVReceiver_isRunning(SV_receiver) && GooseReceiver_isRunning(receiver)) {
+    signal(SIGINT, sigint_handler);
+
+    while (running){ /* infinite loop */
+      if(osc_complete > 3){
         time_t t = time(NULL);
-    struct tm *tm_info = localtime(&t);
+        struct tm *tm_info = localtime(&t);
 
-    char b_time[50];
-    // Example: 2024-05-14 10:45:30
-    strftime(b_time, 50, "osc_%Y-%m-%d_%H-%M-%S.csv", tm_info);
+        char b_time[50];
+        // Example: 2024-05-14 10:45:30
+        strftime(b_time, 50, "osc_%Y-%m-%d_%H-%M-%S.csv", tm_info);
         printf("================= OSCILO COMPLETA %s ===============\n", b_time);
-        
-// 1. Create/Open a file in "w" (write) or "a" (append) mode
-    FILE *fptr = fopen(b_time, "w");
-    FILE *fptr2 = fopen("data.csv", "w");
-    
-    if (fptr == NULL || fptr2 == NULL) {
-        printf("Error opening file!\n");
-    } else {
 
-    // 2. Write headers (optional)
-    fprintf(fptr, "Amostra;Vm;Az;Br;Res\n");
-    fprintf(fptr2, "Amostra;Vm;Az;Br;Res\n");
+        // 1. Create/Open a file in "w" (write) or "a" (append) mode
+        FILE *fptr = fopen(b_time, "w");
+        FILE *fptr2 = fopen("data.csv", "w");
 
-    // 3. Write data rows
-       int i = 0;
-        for (i = 0; i < MAX_BUF; i++){
-          int pos = start_buf_pos + i;
-          if (!(pos < MAX_BUF)) pos -= MAX_BUF;
+        if (fptr == NULL || fptr2 == NULL) {
+          printf("Error opening file!\n");
+        } else {
 
-          fprintf(fptr, "%d;%d;%d;%d;%d\n", i, buf_vm.data[pos], buf_az.data[pos], buf_br.data[pos], buf_r.data[pos]);
-          fprintf(fptr2, "%d;%d;%d;%d;%d\n", i, buf_vm.data[pos], buf_az.data[pos], buf_br.data[pos], buf_r.data[pos]);
-        }
-    // 4. Close the file to save and free memory
-    fclose(fptr);
-    fclose(fptr2);
+          // 2. Write headers (optional)
+          fprintf(fptr, "Amostra;Vm;Az;Br;Res\n");
+          fprintf(fptr2, "Amostra;Vm;Az;Br;Res\n");
+
+          // 3. Write data rows
+          int i = 0;
+          for (i = 0; i < MAX_BUF; i++){
+            int pos = start_buf_pos + i;
+            if (!(pos < MAX_BUF)) pos -= MAX_BUF;
+
+            fprintf(fptr, "%d;%d;%d;%d;%d\n", i, buf_vm.data[pos], buf_az.data[pos], buf_br.data[pos], buf_r.data[pos]);
+            fprintf(fptr2, "%d;%d;%d;%d;%d\n", i, buf_vm.data[pos], buf_az.data[pos], buf_br.data[pos], buf_r.data[pos]);
+          }
+          // 4. Close the file to save and free memory
+          fclose(fptr);
+          fclose(fptr2);
         } 
         Thread_sleep(1000);
 
@@ -340,33 +350,33 @@ main(int argc, char** argv)
         trigged = 0;
       }
 
-            char tecla = getchar();
-            if (tecla == 'x') {
-              printf ("------------- Manual trigger ---------------\n");
-              if (!trigged){
-      trigged = 1;
-      trg_smp_cnt = last_buf_pos;
-      start_buf_pos = last_buf_pos - 1440;
-      if(start_buf_pos < 0) start_buf_pos = MAX_BUF + start_buf_pos;
-      end_buf_pos = last_buf_pos - 1441;
-      if(end_buf_pos < 0) end_buf_pos = MAX_BUF + end_buf_pos;
+      char tecla = getchar();
+      if (tecla == 'x') {
+        printf ("------------- Manual trigger ---------------\n");
+        if (!trigged){
+          trigged = 1;
+          trg_smp_cnt = last_buf_pos;
+          start_buf_pos = last_buf_pos - 1440;
+          if(start_buf_pos < 0) start_buf_pos = MAX_BUF + start_buf_pos;
+          end_buf_pos = last_buf_pos - 1441;
+          if(end_buf_pos < 0) end_buf_pos = MAX_BUF + end_buf_pos;
           printf("start = %d, end = %d\n", start_buf_pos, end_buf_pos);
-    }
-            }
-            Thread_sleep(50);
         }
-        /* Stop listening to SV messages */
-        SVReceiver_stop(SV_receiver);
+      }
+      Thread_sleep(50);
     }
-    else {
-        printf("Failed to start SV subscriber. Reason can be that the Ethernet interface doesn't exist or root permission are required.\n");
-    }
-    set_nonblocking(0);
-    GooseReceiver_stop(receiver);
+    /* Stop listening to SV messages */
+    SVReceiver_stop(SV_receiver);
+  }
+  else {
+    printf("Failed to start SV subscriber. Reason can be that the Ethernet interface doesn't exist or root permission are required.\n");
+  }
+  set_nonblocking(0);
+  GooseReceiver_stop(receiver);
 
-    GooseReceiver_destroy(receiver);
+  GooseReceiver_destroy(receiver);
 
-    /* Cleanup and free resources */
-    SVReceiver_destroy(SV_receiver);
-    return 0;
+  /* Cleanup and free resources */
+  SVReceiver_destroy(SV_receiver);
+  return 0;
 }
