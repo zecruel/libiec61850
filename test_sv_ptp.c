@@ -218,9 +218,9 @@ void * pthread_task(void * argument) {
 
     //SVPublisher_ASDU_setRefrTmNs(asdu, Hal_getTimeInNs());
     // trapaça
-    int trick = sampleCount - 6;
-    if (trick < 0) trick = 4799 + trick;
-    SVPublisher_ASDU_setSmpCnt(asdu, (uint16_t) trick); //sampleCount);
+    //int trick = sampleCount - 6;
+    //if (trick < 0) trick = 4799 + trick;
+    SVPublisher_ASDU_setSmpCnt(asdu, (uint16_t) sampleCount);
 
     SVPublisher_publish(svPublisher);
 
