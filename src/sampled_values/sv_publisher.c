@@ -36,7 +36,7 @@
 #define DEBUG_SV_PUBLISHER 1
 #endif
 
-#define CONFIG_SV_DEFAULT_DST_ADDRESS {0x01, 0x0c, 0xcd, 0x04, 0x00, 0x10}
+#define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS
 
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
@@ -107,27 +107,29 @@ preparePacketBuffer(SVPublisher self, CommParameters* parameters, const char* in
 {
     uint8_t defaultDstAddr[] = CONFIG_SV_DEFAULT_DST_ADDRESS;
 
+    uint8_t* srcAddr;
     uint8_t* dstAddr;
     uint8_t priority;
     uint16_t vlanId;
     uint16_t appId;
 
-    uint8_t srcAddr[6];
-
-    if (interfaceId != NULL)
-        Ethernet_getInterfaceMACAddress(interfaceId, srcAddr);
-    else
-        Ethernet_getInterfaceMACAddress(CONFIG_ETHERNET_INTERFACE_ID, srcAddr);
-
+    uint8_t isrcAddr[6];
     if (parameters == NULL)
     {
-        dstAddr = defaultDstAddr;
+ 
+      if (interfaceId != NULL)
+        Ethernet_getInterfaceMACAddress(interfaceId, isrcAddr);
+      else
+        Ethernet_getInterfaceMACAddress(CONFIG_ETHERNET_INTERFACE_ID, isrcAddr);
+      srcAddr = isrcAddr;
+       dstAddr = defaultDstAddr;
         priority = CONFIG_SV_DEFAULT_PRIORITY;
         vlanId = CONFIG_SV_DEFAULT_VLAN_ID;
         appId = CONFIG_SV_DEFAULT_APPID;
     }
     else
     {
+        srcAddr = parameters->srcAddress;
         dstAddr = parameters->dstAddress;
         priority = parameters->vlanPriority;
         vlanId = parameters->vlanId;
@@ -453,8 +455,7 @@ SVPublisher_ASDU_encodeToBuffer(SVPublisher_ASDU self, uint8_t* buffer, int bufP
     /* SmpSynch */
     bufPos = BerEncoder_encodeTL(0x85, 1, buffer, bufPos);
     self->smpSynchBuf = buffer + bufPos;
-    //buffer[bufPos++] = self->smpSynch;
-    buffer[bufPos++] = 0;
+    buffer[bufPos++] = self->smpSynch;
 
     /* SmpRate */
     if (self->hasSmpRate)
