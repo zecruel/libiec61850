@@ -253,15 +253,10 @@ GoosePublisher_setTimeAllowedToLive(GoosePublisher self, uint32_t timeAllowedToL
 static bool
 prepareGooseBuffer(GoosePublisher self, CommParameters* parameters, const char* interfaceID, bool useVlanTags)
 {
-    uint8_t srcAddr[6];
-
-    if (interfaceID)
-        Ethernet_getInterfaceMACAddress(interfaceID, srcAddr);
-    else
-        Ethernet_getInterfaceMACAddress(CONFIG_ETHERNET_INTERFACE_ID, srcAddr);
-
+    uint8_t isrcAddr[6];
     uint8_t defaultDstAddr[] = CONFIG_GOOSE_DEFAULT_DST_ADDRESS;
 
+    uint8_t* srcAddr;
     uint8_t* dstAddr;
     uint8_t priority;
     uint16_t vlanId;
@@ -269,6 +264,7 @@ prepareGooseBuffer(GoosePublisher self, CommParameters* parameters, const char* 
 
     if (parameters)
     {
+        srcAddr = parameters->srcAddress;
         dstAddr = parameters->dstAddress;
         priority = parameters->vlanPriority;
         vlanId = parameters->vlanId;
@@ -276,7 +272,13 @@ prepareGooseBuffer(GoosePublisher self, CommParameters* parameters, const char* 
     }
     else
     {
-        dstAddr = defaultDstAddr;
+ 
+      if (interfaceID)
+        Ethernet_getInterfaceMACAddress(interfaceID, isrcAddr);
+      else
+        Ethernet_getInterfaceMACAddress(CONFIG_ETHERNET_INTERFACE_ID, isrcAddr);
+      srcAddr = isrcAddr;
+       dstAddr = defaultDstAddr;
         priority = CONFIG_GOOSE_DEFAULT_PRIORITY;
         vlanId = CONFIG_GOOSE_DEFAULT_VLAN_ID;
         appId = CONFIG_GOOSE_DEFAULT_APPID;

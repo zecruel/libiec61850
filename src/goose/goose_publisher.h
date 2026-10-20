@@ -40,6 +40,7 @@ typedef struct sCommParameters {
     uint8_t vlanPriority;
     uint16_t vlanId;
     uint16_t appId;
+    uint8_t srcAddress[6];
     uint8_t dstAddress[6];
 } CommParameters;
 
